@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Goal Tracker — WhatsApp Report Dashboard</title>
+<style>
+  /* ═══════════════════════════════════════════
+     OFFLINE FONTS — System font stack that looks
+     great on Windows, Mac, Linux, and phones.
+     No Google Fonts dependency = works forever.
+     ═══════════════════════════════════════════ */
+  :root {
+    --font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --mono: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+
+    /* ── Colour palette: warm, inviting, colourful ── */
+    --bg: #f6f3ee;
+    --surface: #ffffff;
+    --surface2: #faf8f5;
+    --border: #e5e0d8;
+    --border-strong: #d0c9be;
+    --text: #2c2a26;
+    --text-dim: #8a857b;
+    --text-mid: #5c5850;
+
+    --blue: #3b82f6;
+    --blue-soft: #dbeafe;
+    --blue-glow: #3b82f630;
+    --green: #16a34a;
+    --green-soft: #dcfce7;
+    --red: #dc2626;
+    --red-soft: #fee2e2;
+    --orange: #ea580c;
+    --orange-soft: #fff7ed;
+    --purple: #7c3aed;
+    --purple-soft: #f3e8ff;
+    --teal: #0d9488;
+    --teal-soft: #ccfbf1;
+    --gold: #ca8a04;
+    --gold-soft: #fef9c3;
+    --pink: #db2777;
+    --pink-soft: #fce7f3;
+
+    --radius: 12px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+
+    /* Leaderboard bar */
+    --bar-bg: #ede9e2;
+    --bar-fill: linear-gradient(90deg, #3b82f6, #7c3aed);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.55;
+  }
+
+  .container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 20px 24px 80px;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    padding: 36px 0 8px;
+  }
+  .header h1 {
+    font-size: 1.85rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .header h1 span { color: var(--blue); }
+  .header p {
+    color: var(--text-dim);
+    margin-top: 4px;
+    font-size: 0.92rem;
+  }
+  .header .badge {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 4px 14px;
+    background: var(--green-soft);
+    color: var(--green);
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 0;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 5px;
+    margin: 20px auto 24px;
+    max-width: 760px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+  }
+  .tab {
+    flex: 1;
+    padding: 11px 16px;
+    border: none;
+    background: none;
+    color: var(--text-dim);
+    font-family: var(--font);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 9px;
+    transition: all 0.2s;
+  }
+  .tab:hover { color: var(--text); background: var(--surface2); }
+  .tab.active {
+    background: var(--blue);
+    color: #fff;
+    box-shadow: 0 2px 8px var(--blue-glow);
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeUp 0.25s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .card h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+  .card .subtitle {
+    font-size: 0.84rem;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .card-color-strip {
+    height: 4px;
+    border-radius: var(--radius) var(--radius) 0 0;
+    margin: -24px -24px 20px -24px;
+  }
+  .strip-blue { background: linear-gradient(90deg, var(--blue), var(--purple)); }
+  .strip-green { background: linear-gradient(90deg, var(--teal), var(--green)); }
+  .strip-orange { background: linear-gradient(90deg, var(--orange), var(--gold)); }
+  .strip-pink { background: linear-gradient(90deg, var(--pink), var(--purple)); }
+
+  /* ── Textarea ── */
+  textarea {
+    width: 100%;
+    min-height: 200px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+    line-height: 1.6;
+  }
+  textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+  textarea::placeholder { color: var(--text-dim); opacity: 0.7; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 22px;
+    border: none;
+    border-radius: 9px;
+    font-family: var(--font);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-blue { background: var(--blue); color: #fff; }
+  .btn-blue:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 3px 10px var(--blue-glow); }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-green:hover { filter: brightness(1.1); }
+  .btn-orange { background: var(--orange); color: #fff; }
+  .btn-orange:hover { filter: brightness(1.1); }
+  .btn-outline {
+    background: var(--surface);
+    color: var(--text-mid);
+    border: 1.5px solid var(--border);
+  }
+  .btn-outline:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-sm { padding: 7px 14px; font-size: 0.82rem; }
+  .btn-xs { padding: 4px 10px; font-size: 0.78rem; }
+  .btn-danger { background: var(--red-soft); color: var(--red); border: 1px solid #fca5a5; }
+  .btn-danger:hover { background: var(--red); color: #fff; }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+  /* ── Bulk textarea for members ── */
+  .bulk-area {
+    width: 100%;
+    min-height: 160px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    line-height: 1.8;
+  }
+  .bulk-area:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+
+  /* ── Member table in settings ── */
+  .member-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 12px;
+  }
+  .member-table th {
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0.3px;
+    color: var(--text-dim);
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--border);
+  }
+  .member-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .member-table tr:hover td { background: var(--surface2); }
+  .member-table .del-btn {
+    background: none;
+    border: none;
+    color: var(--red);
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .member-table .del-btn:hover { background: var(--red-soft); }
+
+  /* ── Goal editor ── */
+  .goal-grid {
+    display: grid;
+    grid-template-columns: 60px 1fr auto 36px;
+    gap: 6px 8px;
+    align-items: center;
+  }
+  .goal-grid input, .goal-grid select {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.85rem;
+    padding: 8px 10px;
+    outline: none;
+  }
+  .goal-grid input:focus, .goal-grid select:focus { border-color: var(--blue); }
+  .goal-grid .del-btn {
+    width: 28px; height: 28px;
+    background: var(--red-soft);
+    border: none;
+    border-radius: 6px;
+    color: var(--red);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .goal-grid .del-btn:hover { background: var(--red); color: #fff; }
+  .goal-grid .label {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 2px;
+  }
+
+  /* ── Colour dot for goals ── */
+  .color-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 4px;
+    flex-shrink: 0;
+  }
+
+  /* ── Tables ── */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    background: var(--surface);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  th {
+    background: var(--surface2);
+    color: var(--text-dim);
+    font-weight: 700;
+    text-transform: none;
+    font-size: 0.75rem;
+    letter-spacing: 0.3px;
+    padding: 11px 12px;
+    text-align: center;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border-bottom: 2px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+  th:hover { background: var(--border); }
+  th .sort-arrow { font-size: 0.65rem; margin-left: 3px; opacity: 0.5; }
+  th .sort-arrow.active { opacity: 1; color: var(--blue); }
+  td {
+    padding: 8px 12px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    height: 42px;
+    max-height: 42px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+    vertical-align: middle;
+  }
+  tr:hover td { background: #faf8f4; }
+
+  td.status-yes { color: var(--green); font-weight: 700; background: var(--green-soft); }
+  td.status-no { color: var(--red); font-weight: 700; background: var(--red-soft); }
+  td.status-text { color: var(--text); background: var(--blue-soft); }
+  td.status-blank { color: var(--text-dim); }
+
+  .points-cell { font-weight: 700; color: var(--purple); font-family: var(--mono); font-size: 0.9rem; }
+
+  /* ── Leaderboard ── */
+  .lb-rank {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    font-weight: 800;
+    font-size: 0.82rem;
+  }
+  .lb-rank.gold { background: var(--gold-soft); color: var(--gold); border: 2px solid #facc15; }
+  .lb-rank.silver { background: #f1f5f9; color: #64748b; border: 2px solid #94a3b8; }
+  .lb-rank.bronze { background: var(--orange-soft); color: var(--orange); border: 2px solid #fb923c; }
+  .lb-rank.other { background: var(--surface2); color: var(--text-dim); border: 2px solid var(--border); }
+
+  .progress-bar {
+    width: 100%;
+    max-width: 180px;
+    height: 10px;
+    background: var(--bar-bg);
+    border-radius: 5px;
+    overflow: hidden;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .progress-bar .fill {
+    height: 100%;
+    background: var(--bar-fill);
+    border-radius: 5px;
+    transition: width 0.5s ease;
+  }
+
+  /* ── Participation ── */
+  .part-posted { color: var(--green); font-weight: 700; background: var(--green-soft); }
+  .part-missed { color: var(--red); font-weight: 600; background: var(--red-soft); }
+
+  /* ── Frozen columns ── */
+  .table-freeze-wrap {
+    overflow: auto;
+    max-height: 620px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    background: var(--surface);
+    position: relative;
+  }
+  .table-freeze-wrap table { border-collapse: separate; border-spacing: 0; }
+  .table-freeze-wrap th { position: sticky; top: 0; z-index: 4; }
+  .table-freeze-wrap .freeze-col { position: sticky; z-index: 3; background: var(--surface); }
+  .table-freeze-wrap th.freeze-col { z-index: 5; background: var(--surface2); }
+  .table-freeze-wrap .freeze-col::after {
+    content: '';
+    position: absolute;
+    right: -4px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(90deg, rgba(0,0,0,0.06), transparent);
+    pointer-events: none;
+  }
+
+  /* ── Filter bar ── */
+  .filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-bar select, .filter-bar input {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.82rem;
+    padding: 7px 12px;
+    outline: none;
+  }
+  .filter-bar select:focus, .filter-bar input:focus { border-color: var(--blue); }
+  .filter-bar label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-dim);
+  }
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* ── Stats strip ── */
+  .stats-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 14px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+  }
+  .stat-card .value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    font-family: var(--mono);
+  }
+  .stat-card .label {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .stat-blue .value { color: var(--blue); }
+  .stat-green .value { color: var(--green); }
+  .stat-purple .value { color: var(--purple); }
+  .stat-orange .value { color: var(--orange); }
+
+  /* ── Section titles ── */
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 28px 0 14px;
+    padding-left: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+  }
+  .section-title .icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    font-size: 0.9rem;
+  }
+
+  /* ── Helpers ── */
+  .hidden { display: none !important; }
+  .mt-8 { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .mt-20 { margin-top: 20px; }
+  .mb-12 { margin-bottom: 12px; }
+  .mb-20 { margin-bottom: 20px; }
+  .text-dim { color: var(--text-dim); }
+  .text-sm { font-size: 0.84rem; }
+  .text-xs { font-size: 0.78rem; }
+
+  td[title] { cursor: default; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text);
+    color: var(--bg);
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    z-index: 999;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    box-shadow: var(--shadow-md);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── Info box ── */
+  .info-box {
+    background: var(--blue-soft);
+    border: 1px solid #93c5fd;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 0.84rem;
+    color: #1e40af;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .info-box strong { font-weight: 700; }
+
+  .warn-box {
+    background: var(--gold-soft);
+    border: 1px solid #fbbf24;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 0.84rem;
+    color: #92400e;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .container { padding: 10px 10px 60px; }
+    .header h1 { font-size: 1.3rem; }
+    .card { padding: 16px; }
+    .card-color-strip { margin: -16px -16px 16px -16px; }
+    .stats-strip { grid-template-columns: 1fr 1fr; }
+    .tabs { max-width: 100%; }
+    .tab { font-size: 0.8rem; padding: 9px 8px; }
+  }
+
+  /* ── How-it-works steps ── */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .step .num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--blue);
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    margin-bottom: 8px;
+  }
+  .step .title { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+  .step .desc { font-size: 0.78rem; color: var(--text-dim); }
+
+  /* ── Accumulated data bar ── */
+  .data-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--purple-soft);
+    border: 1px solid #c4b5fd;
+    border-radius: 10px;
+    padding: 10px 18px;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+    color: var(--purple);
+    font-weight: 600;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1>Goal <span>Tracker</span></h1>
+    <p>Paste WhatsApp messages &rarr; Get a clean accountability dashboard</p>
+    <div class="badge">100% OFFLINE &bull; NO DATA LEAVES YOUR DEVICE</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('input')">Paste &amp; Process</button>
+    <button class="tab" onclick="switchTab('settings')">Settings</button>
+    <button class="tab" onclick="switchTab('dashboard')">Dashboard</button>
+  </div>
+
+  <!-- ═══════════ INPUT PANEL ═══════════ -->
+  <div id="panel-input" class="panel active">
+
+    <div class="steps">
+      <div class="step"><div class="num">1</div><div class="title">Settings</div><div class="desc">Add members &amp; customise goals (one-time)</div></div>
+      <div class="step"><div class="num">2</div><div class="title">Paste</div><div class="desc">Copy WhatsApp messages and paste below</div></div>
+      <div class="step"><div class="num">3</div><div class="title">Dashboard</div><div class="desc">View leaderboard, status &amp; download CSV</div></div>
+    </div>
+
+    <!-- Accumulated data indicator -->
+    <div id="accumulatedBar" class="data-bar hidden">
+      <span id="accumulatedText">0 reports in memory</span>
+      <div style="display:flex; gap:6px;">
+        <button class="btn btn-xs btn-outline" onclick="clearAccumulated()">Clear all data</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-color-strip strip-blue"></div>
+      <h2>Paste WhatsApp Messages</h2>
+      <p class="subtitle">Copy messages from WhatsApp (Android, iPhone, or WhatsApp Web) and paste here. You can paste multiple batches — new data merges with existing data, and duplicate reports are automatically removed.</p>
+      <textarea id="rawInput" placeholder="Just select and copy messages from your WhatsApp group, then paste here.
+
+The tool will automatically:
+  • Find daily reports (messages with goal keywords)
+  • Ignore regular chat messages
+  • Extract M.No, date, and goal statuses
+  • Merge with any previously parsed data"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-blue" onclick="parseMessages()">Process Messages</button>
+        <button class="btn btn-outline" onclick="document.getElementById('rawInput').value=''; showToast('Cleared input box');">Clear text box</button>
+      </div>
+    </div>
+
+    <div id="parseResult" class="hidden">
+      <div class="stats-strip" id="statsStrip"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ SETTINGS PANEL ═══════════ -->
+  <div id="panel-settings" class="panel">
+
+    <!-- Members -->
+    <div class="card">
+      <div class="card-color-strip strip-green"></div>
+      <h2>Member List</h2>
+      <p class="subtitle">Paste your member list below — one member per line, in the format: <strong>M.No, Name</strong></p>
+
+      <div class="info-box">
+        <strong>Format:</strong> Type one member per line like this:<br>
+        <code>1, Rahul Sharma</code><br>
+        <code>2, Priya Patel</code><br>
+        <code>15, Amit Kumar</code><br><br>
+        You can use comma, tab, hyphen, or colon as separator. Then click <strong>"Save Members"</strong>.
+      </div>
+
+      <textarea class="bulk-area" id="bulkMembers" placeholder="1, Rahul Sharma
+2, Priya Patel
+3, Amit Kumar
+..."></textarea>
+      <div class="btn-row">
+        <button class="btn btn-green btn-sm" onclick="saveBulkMembers()">Save Members</button>
+      </div>
+
+      <!-- Saved members preview -->
+      <div id="memberPreview" class="mt-12"></div>
+    </div>
+
+    <!-- Goals -->
+    <div class="card">
+      <div class="card-color-strip strip-orange"></div>
+      <h2>Goal List</h2>
+      <p class="subtitle">Each goal has an <strong>emoji</strong> (optional — for display only), a <strong>label</strong> (the name), and <strong>keywords</strong> (what the parser looks for in messages). The keywords are what actually match — so even if someone skips the emoji, it still works.</p>
+
+      <div class="info-box">
+        <strong>How keyword matching works:</strong> The parser searches each line of a report for the keywords. For example, if keywords are <code>wake,5am,5 am</code>, then a line containing "Wake up at 5AM" <em>or</em> "5 am: Yes" will both match. This means your group doesn't need to use exact emojis. Keywords are NOT case-sensitive.
+      </div>
+
+      <div id="goalList"></div>
+      <div class="btn-row">
+        <button class="btn btn-sm btn-outline" onclick="addGoalRow()">+ Add Goal</button>
+        <button class="btn btn-sm btn-orange" onclick="saveGoals()">Save Goals</button>
+        <button class="btn btn-sm btn-outline" onclick="resetGoalDefaults()">Reset to Defaults</button>
+      </div>
+    </div>
+
+    <!-- Backup / Restore -->
+    <div class="card">
+      <div class="card-color-strip strip-pink"></div>
+      <h2>Backup &amp; Restore Settings</h2>
+      <p class="subtitle">Download your settings (members + goals) as a file. If browser data ever gets cleared, just re-import this file.</p>
+      <div class="btn-row">
+        <button class="btn btn-sm btn-blue" onclick="exportSettings()">Download Settings Backup</button>
+        <button class="btn btn-sm btn-outline" onclick="document.getElementById('importFile').click()">Import Settings from File</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importSettings(event)">
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ DASHBOARD PANEL ═══════════ -->
+  <div id="panel-dashboard" class="panel">
+    <div id="noDashboard" class="card" style="text-align:center; padding:60px 20px;">
+      <p style="font-size:2.2rem; margin-bottom:8px;">📭</p>
+      <p style="font-weight:700; font-size:1.05rem; margin-bottom:4px;">No data yet</p>
+      <p class="text-dim text-sm">Go to <strong>Paste &amp; Process</strong> to get started.</p>
+    </div>
+
+    <div id="dashboardContent" class="hidden">
+
+      <div class="stats-strip" id="dashStatsStrip"></div>
+
+      <!-- Date range filter -->
+      <div class="card" style="padding:14px 20px;">
+        <div class="filter-bar" style="margin-bottom:0;">
+          <div class="filter-group">
+            <label>From:</label>
+            <input type="date" id="dateFrom" onchange="applyGlobalFilters()">
+          </div>
+          <div class="filter-group">
+            <label>To:</label>
+            <input type="date" id="dateTo" onchange="applyGlobalFilters()">
+          </div>
+          <button class="btn btn-xs btn-outline" onclick="clearDateRange()">Clear Dates</button>
+        </div>
+      </div>
+
+      <!-- Leaderboard -->
+      <div class="section-title"><span class="icon" style="background:var(--gold-soft);color:var(--gold);">🏆</span> Leaderboard</div>
+      <div class="btn-row mb-12">
+        <button class="btn btn-sm btn-green" onclick="downloadLeaderboardCSV()">Download CSV</button>
+      </div>
+      <div class="table-freeze-wrap mb-20">
+        <table id="leaderboardTable"></table>
+      </div>
+
+      <!-- Status dashboard -->
+      <div class="section-title"><span class="icon" style="background:var(--blue-soft);color:var(--blue);">📋</span> Full Status Dashboard</div>
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label>Member:</label>
+          <select id="statusMemberFilter" onchange="renderStatusTable()"><option value="">All Members</option></select>
+        </div>
+        <button class="btn btn-sm btn-green" onclick="downloadCSV()">Download CSV</button>
+      </div>
+      <div class="table-freeze-wrap" style="max-height: 620px;">
+        <table id="statusTable"></table>
+      </div>
+
+      <!-- Participation -->
+      <div class="section-title mt-20"><span class="icon" style="background:var(--teal-soft);color:var(--teal);">📅</span> Participation Summary</div>
+      <p class="text-sm text-dim mb-12">Who posted and who missed — by date. Names, not numbers, for easy reading.</p>
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label>Member:</label>
+          <select id="participationMemberFilter" onchange="renderParticipation()"><option value="">All Members</option></select>
+        </div>
+      </div>
+      <div class="table-freeze-wrap">
+        <table id="participationTable"></table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+const DEFAULT_GOALS = [
+  { emoji: '⏰', label: 'Wake up @ 5AM',    keywords: 'wake,5am,5 am,wakeup' },
+  { emoji: '🧘', label: 'Meditation',       keywords: 'meditation,meditat' },
+  { emoji: '🚶', label: 'Walking',          keywords: 'walking,walk,steps' },
+  { emoji: '💬', label: 'Affirmations',     keywords: 'affirmation' },
+  { emoji: '📖', label: 'Learning',         keywords: 'learning,learn,study' },
+  { emoji: '🎯', label: 'Deep Work',        keywords: 'deep work,deepwork,focused work' },
+  { emoji: '📈', label: '1% Goal Progress', keywords: '1%,goal progress,1 %' },
+  { emoji: '🙏', label: 'Gratitude',        keywords: 'gratitude,grateful' },
+  { emoji: '🏆', label: "Today's Win",      keywords: "today's win,todays win,win,highlight" }
+];
+
+const GOAL_COLORS = ['#3b82f6','#16a34a','#ea580c','#7c3aed','#db2777','#0d9488','#ca8a04','#dc2626','#6366f1','#059669','#d97706','#be185d'];
+
+let goals = loadFromStorage('goals', DEFAULT_GOALS);
+let members = loadFromStorage('members', []);  // [{mno, name}]
+let accumulatedData = loadFromStorage('accumulated', []);  // all parsed reports
+
+function loadFromStorage(key, fallback) {
+  try {
+    const v = localStorage.getItem('wgt2_' + key);
+    return v ? JSON.parse(v) : JSON.parse(JSON.stringify(fallback));
+  } catch { return JSON.parse(JSON.stringify(fallback)); }
+}
+function saveToStorage(key, val) {
+  try { localStorage.setItem('wgt2_' + key, JSON.stringify(val)); } catch {}
+}
+
+// ════════════════════════════════════════
+// TAB SWITCHING
+// ════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['input','settings','dashboard'][i] === name);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'settings') renderSettings();
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'input') updateAccumulatedBar();
+}
+
+// ════════════════════════════════════════
+// SETTINGS
+// ════════════════════════════════════════
+function renderSettings() {
+  renderMemberPreview();
+  renderGoalEditor();
+  populateBulkTextarea();
+}
+
+function populateBulkTextarea() {
+  const ta = document.getElementById('bulkMembers');
+  if (members.length && !ta.value.trim()) {
+    ta.value = members.map(m => m.mno + ', ' + m.name).join('\n');
+  }
+}
+
+function saveBulkMembers() {
+  const raw = document.getElementById('bulkMembers').value;
+  const lines = raw.split('\n').filter(l => l.trim());
+  const newMembers = [];
+
+  for (const line of lines) {
+    // Support separators: comma, tab, hyphen, colon, pipe
+    const match = line.match(/^\s*(\d+)\s*[,\t\-\:\|]\s*(.+)\s*$/);
+    if (match) {
+      newMembers.push({ mno: match[1].trim(), name: match[2].trim() });
+    }
+  }
+
+  if (newMembers.length === 0) {
+    showToast('No valid entries found. Use format: 1, Name');
+    return;
+  }
+
+  members = newMembers;
+  saveToStorage('members', members);
+  renderMemberPreview();
+  showToast(members.length + ' members saved!');
+}
+
+function renderMemberPreview() {
+  const el = document.getElementById('memberPreview');
+  if (!members.length) {
+    el.innerHTML = '<p class="text-sm text-dim">No members saved yet.</p>';
+    return;
+  }
+  let h = '<table class="member-table"><thead><tr><th>M.No</th><th>Name</th><th></th></tr></thead><tbody>';
+  members.forEach((m, i) => {
+    h += `<tr><td style="font-family:var(--mono);font-weight:700">${esc(m.mno)}</td><td>${esc(m.name)}</td>
+      <td><button class="del-btn" onclick="deleteMember(${i})">×</button></td></tr>`;
+  });
+  h += '</tbody></table>';
+  el.innerHTML = h;
+}
+
+function deleteMember(i) {
+  members.splice(i, 1);
+  saveToStorage('members', members);
+  document.getElementById('bulkMembers').value = members.map(m => m.mno + ', ' + m.name).join('\n');
+  renderMemberPreview();
+}
+
+// ── Goal editor ──
+function renderGoalEditor() {
+  const el = document.getElementById('goalList');
+  let h = '<div class="goal-grid">';
+  h += '<span class="label">Emoji</span><span class="label">Label</span><span class="label">Keywords (comma-separated)</span><span></span>';
+  goals.forEach((g, i) => {
+    h += `<input value="${esc(g.emoji)}" oninput="goals[${i}].emoji=this.value" style="text-align:center;font-size:1.1rem" placeholder="🎯">`;
+    h += `<input value="${esc(g.label)}" oninput="goals[${i}].label=this.value" placeholder="Goal name">`;
+    h += `<input value="${esc(g.keywords || '')}" oninput="goals[${i}].keywords=this.value" placeholder="wake,5am,wakeup" style="font-size:0.8rem">`;
+    h += `<button class="del-btn" onclick="goals.splice(${i},1);renderGoalEditor();">×</button>`;
+  });
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+function addGoalRow() {
+  goals.push({ emoji: '', label: '', keywords: '' });
+  renderGoalEditor();
+}
+function saveGoals() {
+  goals = goals.filter(g => g.label.trim() && g.keywords.trim());
+  saveToStorage('goals', goals);
+  showToast(goals.length + ' goals saved!');
+  renderGoalEditor();
+}
+function resetGoalDefaults() {
+  goals = JSON.parse(JSON.stringify(DEFAULT_GOALS));
+  saveToStorage('goals', goals);
+  renderGoalEditor();
+  showToast('Goals reset to defaults');
+}
+
+// ── Backup / Restore ──
+function exportSettings() {
+  const data = { members, goals, exported: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'goal_tracker_settings_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Settings backup downloaded!');
+}
+function importSettings(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.members) { members = data.members; saveToStorage('members', members); }
+      if (data.goals) { goals = data.goals; saveToStorage('goals', goals); }
+      renderSettings();
+      document.getElementById('bulkMembers').value = members.map(m => m.mno + ', ' + m.name).join('\n');
+      showToast('Settings imported! ' + members.length + ' members, ' + goals.length + ' goals');
+    } catch { showToast('Invalid file. Please use a settings backup JSON.'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ════════════════════════════════════════
+// DATE PARSING
+// ════════════════════════════════════════
+const MONTH_MAP = {
+  jan:1,january:1,feb:2,february:2,mar:3,march:3,apr:4,april:4,
+  may:5,jun:6,june:6,jul:7,july:7,aug:8,august:8,sep:9,sept:9,
+  september:9,oct:10,october:10,nov:11,november:11,dec:12,december:12
+};
+
+function parseDate(str) {
+  if (!str) return null;
+  str = str.trim();
+  let d, m, y;
+
+  // DD/MM/YY or DD/MM/YYYY (separators: / - .)
+  let match = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+  if (match) {
+    d = parseInt(match[1]); m = parseInt(match[2]); y = parseInt(match[3]);
+    if (y < 100) y += 2000;
+    if (m >= 1 && m <= 12 && d >= 1 && d <= 31) return new Date(y, m - 1, d);
+  }
+
+  // Remove ordinal suffixes
+  let s = str.replace(/(\d+)(st|nd|rd|th)/gi, '$1');
+
+  // "Month DD, YYYY" or "Month DD YYYY" or "Month DD"
+  match = s.match(/^([a-zA-Z]+)\s+(\d{1,2})(?:\s*,?\s*(\d{2,4}))?$/);
+  if (match) {
+    m = MONTH_MAP[match[1].toLowerCase()];
+    d = parseInt(match[2]);
+    y = match[3] ? parseInt(match[3]) : new Date().getFullYear();
+    if (y < 100) y += 2000;
+    if (m) return new Date(y, m - 1, d);
+  }
+
+  // "DD Month YYYY" or "DD Month"
+  match = s.match(/^(\d{1,2})\s+([a-zA-Z]+)(?:\s+(\d{2,4}))?$/);
+  if (match) {
+    d = parseInt(match[1]);
+    m = MONTH_MAP[match[2].toLowerCase()];
+    y = match[3] ? parseInt(match[3]) : new Date().getFullYear();
+    if (y < 100) y += 2000;
+    if (m) return new Date(y, m - 1, d);
+  }
+
+  return null;
+}
+
+function formatDateDDMMYY(dateObj) {
+  if (!dateObj || isNaN(dateObj)) return '??/??/??';
+  const dd = String(dateObj.getDate()).padStart(2, '0');
+  const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const yy = String(dateObj.getFullYear()).slice(-2);
+  return `${dd}/${mm}/${yy}`;
+}
+
+function parseDateDDMMYY(str) {
+  const p = str.split('/');
+  if (p.length !== 3) return null;
+  let y = parseInt(p[2]);
+  if (y < 100) y += 2000;
+  return new Date(y, parseInt(p[1]) - 1, parseInt(p[0]));
+}
+
+// ════════════════════════════════════════
+// MESSAGE PARSING — keyword-based
+// ════════════════════════════════════════
+function matchesGoal(line, goal) {
+  const lower = line.toLowerCase();
+  // 1. Check emoji first (instant match)
+  if (goal.emoji && line.includes(goal.emoji)) return true;
+  // 2. Check keywords
+  const kws = (goal.keywords || '').split(',').map(k => k.trim().toLowerCase()).filter(Boolean);
+  for (const kw of kws) {
+    if (lower.includes(kw)) return true;
+  }
+  return false;
+}
+
+function countGoalMatches(body) {
+  let count = 0;
+  const lines = body.split('\n');
+  for (const goal of goals) {
+    for (const line of lines) {
+      if (matchesGoal(line, goal)) { count++; break; }
+    }
+  }
+  return count;
+}
+
+function parseMessages() {
+  const raw = document.getElementById('rawInput').value;
+  if (!raw.trim()) { showToast('Paste some messages first!'); return; }
+
+  goals = loadFromStorage('goals', DEFAULT_GOALS);
+  members = loadFromStorage('members', []);
+
+  // Split WhatsApp messages
+  const rawCopy = '\n' + raw;
+  const re = /\n(?:\[?)(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})(?:\s*,?\s*)(\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?)(?:\]?\s*[-–]?\s*)([^:\n]+?):\s/gi;
+  const allMatches = [];
+  let match;
+
+  while ((match = re.exec(rawCopy)) !== null) {
+    allMatches.push({
+      timestamp: match[1],
+      time: match[2],
+      sender: match[3].trim(),
+      bodyStart: match.index + match[0].length,
+      fullMatchStart: match.index
+    });
+  }
+
+  const messages = [];
+  for (let i = 0; i < allMatches.length; i++) {
+    const bodyEnd = (i + 1 < allMatches.length) ? allMatches[i + 1].fullMatchStart : rawCopy.length;
+    allMatches[i].body = rawCopy.slice(allMatches[i].bodyStart, bodyEnd).trim();
+    messages.push(allMatches[i]);
+  }
+
+  // Filter: must match at least 1 goal
+  const reports = messages.filter(msg => countGoalMatches(msg.body) >= 1);
+
+  // Parse each report
+  const newData = [];
+  for (const rpt of reports) {
+    // Extract M.No — flexible matching
+    const mnoMatch = rpt.body.match(/(?:M\.?\s*(?:No|Number|num)\.?\s*[:\-–]?\s*|Membership\s*(?:No|Number|#)?\s*[:\-–]?\s*)(\d+)/i);
+    const mno = mnoMatch ? mnoMatch[1].trim() : '?';
+
+    const member = members.find(m => m.mno.trim() === mno);
+    const name = member ? member.name : rpt.sender;
+
+    // Extract date
+    let reportDate = null;
+    const dateLineMatch = rpt.body.match(/(?:date|dt)\s*[:\-–]?\s*(.+)/i);
+    if (dateLineMatch) {
+      reportDate = parseDate(dateLineMatch[1].trim().split('\n')[0].replace(/[,;]*$/, ''));
+    }
+    if (!reportDate) reportDate = parseDate(rpt.timestamp);
+
+    // Extract goal statuses via keyword matching
+    const goalStatuses = {};
+    const lines = rpt.body.split('\n');
+
+    for (const goal of goals) {
+      let found = false;
+      for (const line of lines) {
+        if (matchesGoal(line, goal)) {
+          // Extract value after colon
+          const colonIdx = line.indexOf(':');
+          let value = '';
+          // Find the LAST colon that makes sense (after keyword match area)
+          // Simple approach: take everything after the first colon
+          if (colonIdx !== -1) {
+            value = line.slice(colonIdx + 1).trim();
+            // If there's a second colon (like time stamps), try the content after the last relevant colon
+            // Heuristic: if the first colon result looks like a time, skip it
+            if (/^\d{1,2}:\d{2}/.test(value)) {
+              const secondColon = line.indexOf(':', colonIdx + 1);
+              if (secondColon !== -1) {
+                value = line.slice(secondColon + 1).trim();
+              }
+            }
+          }
+          goalStatuses[goal.label] = value;
+          found = true;
+          break;
+        }
+      }
+      if (!found) goalStatuses[goal.label] = '';
+    }
+
+    const dateStr = formatDateDDMMYY(reportDate);
+
+    newData.push({
+      mno,
+      name,
+      date: dateStr,
+      dateObj: reportDate,
+      goals: goalStatuses,
+      _key: mno + '|' + dateStr  // deduplication key
+    });
+  }
+
+  // Merge with accumulated data (dedup: keep latest per person+date)
+  const dataMap = {};
+  for (const d of accumulatedData) {
+    dataMap[d._key || (d.mno + '|' + d.date)] = d;
+  }
+  for (const d of newData) {
+    dataMap[d._key] = d;  // overwrite = keep latest
+  }
+  accumulatedData = Object.values(dataMap);
+
+  // Sort by date descending
+  accumulatedData.sort((a, b) => {
+    const da = a.dateObj ? a.dateObj.getTime() : 0;
+    const db = b.dateObj ? b.dateObj.getTime() : 0;
+    return db - da;
+  });
+
+  saveToStorage('accumulated', accumulatedData);
+
+  // Stats
+  const uniqueMembers = new Set(accumulatedData.map(d => d.mno));
+  const uniqueDates = new Set(accumulatedData.map(d => d.date));
+  document.getElementById('statsStrip').innerHTML = `
+    <div class="stat-card stat-blue"><div class="value">${newData.length}</div><div class="label">New Reports</div></div>
+    <div class="stat-card stat-green"><div class="value">${accumulatedData.length}</div><div class="label">Total Reports</div></div>
+    <div class="stat-card stat-purple"><div class="value">${uniqueMembers.size}</div><div class="label">Members</div></div>
+    <div class="stat-card stat-orange"><div class="value">${messages.length - reports.length}</div><div class="label">Chats Ignored</div></div>
+  `;
+  document.getElementById('parseResult').classList.remove('hidden');
+  updateAccumulatedBar();
+
+  showToast(newData.length + ' new reports parsed!');
+  setTimeout(() => switchTab('dashboard'), 700);
+}
+
+function updateAccumulatedBar() {
+  const bar = document.getElementById('accumulatedBar');
+  if (accumulatedData.length) {
+    bar.classList.remove('hidden');
+    document.getElementById('accumulatedText').textContent = accumulatedData.length + ' reports in memory from ' + new Set(accumulatedData.map(d => d.date)).size + ' dates';
+  } else {
+    bar.classList.add('hidden');
+  }
+}
+
+function clearAccumulated() {
+  if (confirm('This will remove all parsed data. Your settings (members & goals) will NOT be affected. Continue?')) {
+    accumulatedData = [];
+    saveToStorage('accumulated', accumulatedData);
+    updateAccumulatedBar();
+    document.getElementById('parseResult').classList.add('hidden');
+    showToast('All report data cleared');
+  }
+}
+
+// ════════════════════════════════════════
+// POINTS
+// ════════════════════════════════════════
+function calcPoints(val) {
+  const v = (val || '').trim().toLowerCase();
+  if (v === '' || v === 'no') return 0;
+  return 1;
+}
+
+// ════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════
+function getFilteredData() {
+  let data = accumulatedData;
+  const from = document.getElementById('dateFrom').value;
+  const to = document.getElementById('dateTo').value;
+  if (from) {
+    const fromDate = new Date(from);
+    data = data.filter(d => {
+      const dt = parseDateDDMMYY(d.date);
+      return dt && dt >= fromDate;
+    });
+  }
+  if (to) {
+    const toDate = new Date(to);
+    toDate.setHours(23,59,59);
+    data = data.filter(d => {
+      const dt = parseDateDDMMYY(d.date);
+      return dt && dt <= toDate;
+    });
+  }
+  return data;
+}
+
+function clearDateRange() {
+  document.getElementById('dateFrom').value = '';
+  document.getElementById('dateTo').value = '';
+  applyGlobalFilters();
+}
+
+function applyGlobalFilters() {
+  renderLeaderboard();
+  renderStatusTable();
+  renderParticipation();
+  // Update stats for filtered range
+  const data = getFilteredData();
+  const uniqueMembers = new Set(data.map(d => d.mno));
+  const uniqueDates = new Set(data.map(d => d.date));
+  let totalPoints = 0;
+  for (const d of data) {
+    for (const g of goals) totalPoints += calcPoints(d.goals[g.label]);
+  }
+  document.getElementById('dashStatsStrip').innerHTML = `
+    <div class="stat-card stat-blue"><div class="value">${data.length}</div><div class="label">Total Reports</div></div>
+    <div class="stat-card stat-green"><div class="value">${uniqueMembers.size}</div><div class="label">Members</div></div>
+    <div class="stat-card stat-orange"><div class="value">${uniqueDates.size}</div><div class="label">Dates Tracked</div></div>
+    <div class="stat-card stat-purple"><div class="value">${totalPoints}</div><div class="label">Total Points</div></div>
+  `;
+}
+
+function populateMemberFilters() {
+  const allNames = {};
+  for (const d of accumulatedData) {
+    if (!allNames[d.mno]) allNames[d.mno] = d.name;
+  }
+  for (const m of members) {
+    if (m.mno.trim() && !allNames[m.mno.trim()]) allNames[m.mno.trim()] = m.name;
+  }
+  const sorted = Object.entries(allNames).sort((a,b) => a[1].localeCompare(b[1]));
+  const opts = '<option value="">All Members</option>' + sorted.map(([mno, name]) => `<option value="${esc(mno)}">${esc(name)} (${esc(mno)})</option>`).join('');
+  const f1 = document.getElementById('statusMemberFilter');
+  const f2 = document.getElementById('participationMemberFilter');
+  if (f1) f1.innerHTML = opts;
+  if (f2) f2.innerHTML = opts;
+}
+
+function renderDashboard() {
+  if (!accumulatedData.length) {
+    document.getElementById('noDashboard').classList.remove('hidden');
+    document.getElementById('dashboardContent').classList.add('hidden');
+    return;
+  }
+  document.getElementById('noDashboard').classList.add('hidden');
+  document.getElementById('dashboardContent').classList.remove('hidden');
+
+  populateMemberFilters();
+  applyGlobalFilters();
+  renderLeaderboard();
+  renderStatusTable();
+  renderParticipation();
+}
+
+let lbSortCol = 'rank';
+let lbSortAsc = true;
+
+function renderLeaderboard() {
+  const data = getFilteredData();
+  const memberStats = {};
+  for (const d of data) {
+    const key = d.mno;
+    if (!memberStats[key]) {
+      memberStats[key] = { mno: d.mno, name: d.name, days: new Set(), totalPoints: 0 };
+    }
+    memberStats[key].days.add(d.date);
+    for (const g of goals) memberStats[key].totalPoints += calcPoints(d.goals[g.label] || '');
+  }
+
+  let sorted = Object.values(memberStats);
+
+  // Default sort: days desc, then points desc
+  sorted.sort((a, b) => {
+    if (b.days.size !== a.days.size) return b.days.size - a.days.size;
+    return b.totalPoints - a.totalPoints;
+  });
+
+  // Apply custom sort
+  if (lbSortCol === 'name') {
+    sorted.sort((a, b) => lbSortAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+  } else if (lbSortCol === 'mno') {
+    sorted.sort((a, b) => lbSortAsc ? parseInt(a.mno) - parseInt(b.mno) : parseInt(b.mno) - parseInt(a.mno));
+  } else if (lbSortCol === 'days') {
+    sorted.sort((a, b) => lbSortAsc ? a.days.size - b.days.size : b.days.size - a.days.size);
+  } else if (lbSortCol === 'points') {
+    sorted.sort((a, b) => lbSortAsc ? a.totalPoints - b.totalPoints : b.totalPoints - a.totalPoints);
+  }
+
+  const totalDates = new Set(data.map(d => d.date)).size || 1;
+
+  function sa(col) { return lbSortCol === col ? (lbSortAsc ? '▲' : '▼') : '⇅'; }
+  function sc(col) { return lbSortCol === col ? 'sort-arrow active' : 'sort-arrow'; }
+
+  let html = `<thead><tr>
+    <th>Rank</th>
+    <th class="freeze-col" style="left:0;min-width:60px" onclick="lbSort('mno')">M.No <span class="${sc('mno')}">${sa('mno')}</span></th>
+    <th class="freeze-col" style="left:60px;min-width:120px" onclick="lbSort('name')">Name <span class="${sc('name')}">${sa('name')}</span></th>
+    <th onclick="lbSort('days')">Days Posted <span class="${sc('days')}">${sa('days')}</span></th>
+    <th>Progress</th>
+    <th onclick="lbSort('points')">Total Points <span class="${sc('points')}">${sa('points')}</span></th>
+  </tr></thead><tbody>`;
+  sorted.forEach((m, i) => {
+    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'other';
+    const pct = Math.round((m.days.size / totalDates) * 100);
+    html += `<tr>
+      <td><span class="lb-rank ${rankClass}">${i + 1}</span></td>
+      <td class="freeze-col" style="left:0;min-width:60px;font-family:var(--mono);font-weight:700">${esc(m.mno)}</td>
+      <td class="freeze-col" style="left:60px;min-width:120px;font-weight:600;text-align:left">${esc(m.name)}</td>
+      <td>${m.days.size} / ${totalDates}</td>
+      <td><div class="progress-bar"><div class="fill" style="width:${pct}%"></div></div> <span style="font-size:0.78rem;color:var(--text-dim)">${pct}%</span></td>
+      <td class="points-cell">${m.totalPoints}</td>
+    </tr>`;
+  });
+  html += '</tbody>';
+  document.getElementById('leaderboardTable').innerHTML = html;
+}
+
+function lbSort(col) {
+  if (lbSortCol === col) lbSortAsc = !lbSortAsc;
+  else { lbSortCol = col; lbSortAsc = true; }
+  renderLeaderboard();
+}
+
+let stSortCol = 'date';
+let stSortAsc = false;
+
+function renderStatusTable() {
+  const filterMno = document.getElementById('statusMemberFilter') ? document.getElementById('statusMemberFilter').value : '';
+  let data = getFilteredData();
+  if (filterMno) data = data.filter(d => d.mno === filterMno);
+
+  // Sort
+  let sortedData = [...data];
+  if (stSortCol === 'date') {
+    sortedData.sort((a, b) => {
+      const da = parseDateDDMMYY(a.date) || new Date(0);
+      const db = parseDateDDMMYY(b.date) || new Date(0);
+      return stSortAsc ? da - db : db - da;
+    });
+  } else if (stSortCol === 'name') {
+    sortedData.sort((a, b) => stSortAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+  } else if (stSortCol === 'mno') {
+    sortedData.sort((a, b) => stSortAsc ? parseInt(a.mno) - parseInt(b.mno) : parseInt(b.mno) - parseInt(a.mno));
+  } else if (stSortCol === 'points') {
+    sortedData.sort((a, b) => {
+      let pa = 0, pb = 0;
+      for (const g of goals) { pa += calcPoints(a.goals[g.label]); pb += calcPoints(b.goals[g.label]); }
+      return stSortAsc ? pa - pb : pb - pa;
+    });
+  }
+
+  function sa(col) { return stSortCol === col ? (stSortAsc ? '▲' : '▼') : '⇅'; }
+  function sc(col) { return stSortCol === col ? 'sort-arrow active' : 'sort-arrow'; }
+
+  let html = `<thead><tr>
+    <th class="freeze-col" style="left:0;min-width:36px">#</th>
+    <th class="freeze-col" style="left:36px;min-width:80px" onclick="stSort('date')">Date <span class="${sc('date')}">${sa('date')}</span></th>
+    <th class="freeze-col" style="left:116px;min-width:60px" onclick="stSort('mno')">M.No <span class="${sc('mno')}">${sa('mno')}</span></th>`;
+  html += `<th onclick="stSort('name')">Name <span class="${sc('name')}">${sa('name')}</span></th>`;
+  goals.forEach((g, i) => {
+    const c = GOAL_COLORS[i % GOAL_COLORS.length];
+    html += `<th><span class="color-dot" style="background:${c}"></span>${esc(g.emoji ? g.emoji + ' ' : '')}${esc(g.label)}</th>`;
+  });
+  html += `<th onclick="stSort('points')">Points <span class="${sc('points')}">${sa('points')}</span></th></tr></thead><tbody>`;
+
+  sortedData.forEach((d, idx) => {
+    html += '<tr>';
+    html += `<td class="freeze-col" style="left:0;min-width:36px;font-size:0.72rem;color:var(--text-dim)">${idx + 1}</td>`;
+    html += `<td class="freeze-col" style="left:36px;min-width:80px;font-family:var(--mono);font-size:0.78rem;font-weight:600">${esc(d.date)}</td>`;
+    html += `<td class="freeze-col" style="left:116px;min-width:60px;font-family:var(--mono)">${esc(d.mno)}</td>`;
+    html += `<td style="font-weight:600;text-align:left">${esc(d.name)}</td>`;
+
+    let rowPoints = 0;
+    for (const g of goals) {
+      const val = d.goals[g.label] || '';
+      const pts = calcPoints(val);
+      rowPoints += pts;
+      const lower = val.trim().toLowerCase();
+      let cls = 'status-blank';
+      if (lower === 'yes') cls = 'status-yes';
+      else if (lower === 'no') cls = 'status-no';
+      else if (val.trim()) cls = 'status-text';
+      html += `<td class="${cls}" title="${esc(val)}">${val.trim() ? esc(val) : '—'}</td>`;
+    }
+    html += `<td class="points-cell">${rowPoints}</td>`;
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('statusTable').innerHTML = html;
+}
+
+function stSort(col) {
+  if (stSortCol === col) stSortAsc = !stSortAsc;
+  else { stSortCol = col; stSortAsc = col === 'name' || col === 'mno'; }
+  renderStatusTable();
+}
+
+let ptSortAsc = false; // date sort direction
+
+function renderParticipation() {
+  const filterMno = document.getElementById('participationMemberFilter') ? document.getElementById('participationMemberFilter').value : '';
+  const data = getFilteredData();
+
+  const allDates = [...new Set(data.map(d => d.date))];
+  allDates.sort((a, b) => {
+    const da = parseDateDDMMYY(a);
+    const db = parseDateDDMMYY(b);
+    return ptSortAsc ? (da || 0) - (db || 0) : (db || 0) - (da || 0);
+  });
+
+  // Build member list: from data + settings
+  const allMembers = {};
+  for (const d of data) {
+    if (!allMembers[d.mno]) allMembers[d.mno] = d.name;
+  }
+  for (const m of members) {
+    if (m.mno.trim() && !allMembers[m.mno.trim()]) allMembers[m.mno.trim()] = m.name;
+  }
+  let memberList = Object.entries(allMembers).sort((a, b) => a[1].localeCompare(b[1]));
+
+  // Apply member filter
+  if (filterMno) memberList = memberList.filter(([mno]) => mno === filterMno);
+
+  const datePosted = {};
+  for (const d of data) {
+    if (!datePosted[d.date]) datePosted[d.date] = new Set();
+    datePosted[d.date].add(d.mno);
+  }
+
+  // Calculate total days posted per member
+  const memberDayCount = {};
+  for (const [mno] of memberList) memberDayCount[mno] = 0;
+  for (const date of allDates) {
+    for (const [mno] of memberList) {
+      if (datePosted[date] && datePosted[date].has(mno)) memberDayCount[mno]++;
+    }
+  }
+
+  let html = `<thead><tr>
+    <th class="freeze-col" style="left:0;min-width:80px" onclick="ptSortAsc=!ptSortAsc;renderParticipation();">Date <span class="${ptSortAsc ? 'sort-arrow active' : 'sort-arrow'}">${ptSortAsc ? '▲' : '▼'}</span></th>`;
+  for (const [mno, name] of memberList) {
+    html += `<th title="M.No: ${esc(mno)}" style="max-width:100px;white-space:normal;font-size:0.68rem">${esc(name)}</th>`;
+  }
+  html += '</tr></thead><tbody>';
+
+  for (const date of allDates) {
+    html += '<tr>';
+    html += `<td class="freeze-col" style="left:0;min-width:80px;font-family:var(--mono);font-size:0.78rem;font-weight:600">${esc(date)}</td>`;
+    for (const [mno] of memberList) {
+      const posted = datePosted[date] && datePosted[date].has(mno);
+      html += posted
+        ? '<td class="part-posted">✓</td>'
+        : '<td class="part-missed">✗</td>';
+    }
+    html += '</tr>';
+  }
+
+  // Sum row
+  html += '<tr style="border-top:3px solid var(--border);font-weight:700;background:var(--surface2);">';
+  html += '<td class="freeze-col" style="left:0;min-width:80px;font-weight:700;font-size:0.78rem;">Total</td>';
+  for (const [mno] of memberList) {
+    html += `<td style="font-weight:700;color:var(--blue);font-family:var(--mono);">${memberDayCount[mno]}</td>`;
+  }
+  html += '</tr>';
+
+  html += '</tbody>';
+  document.getElementById('participationTable').innerHTML = html;
+}
+
+// ════════════════════════════════════════
+// CSV DOWNLOAD
+// ════════════════════════════════════════
+function downloadLeaderboardCSV() {
+  const data = getFilteredData();
+  const memberStats = {};
+  for (const d of data) {
+    const key = d.mno;
+    if (!memberStats[key]) {
+      memberStats[key] = { mno: d.mno, name: d.name, days: new Set(), totalPoints: 0 };
+    }
+    memberStats[key].days.add(d.date);
+    for (const g of goals) memberStats[key].totalPoints += calcPoints(d.goals[g.label] || '');
+  }
+  const sorted = Object.values(memberStats).sort((a, b) => {
+    if (b.days.size !== a.days.size) return b.days.size - a.days.size;
+    return b.totalPoints - a.totalPoints;
+  });
+  const totalDates = new Set(data.map(d => d.date)).size || 1;
+
+  const headers = ['Rank', 'M.No', 'Name', 'Days Posted', 'Total Days', 'Progress %', 'Total Points'];
+  let csv = '\uFEFF';
+  csv += headers.map(h => '"' + h + '"').join(',') + '\n';
+  sorted.forEach((m, i) => {
+    const pct = Math.round((m.days.size / totalDates) * 100);
+    csv += [i + 1, m.mno, m.name, m.days.size, totalDates, pct + '%', m.totalPoints].map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',') + '\n';
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'leaderboard_' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Leaderboard CSV downloaded!');
+}
+
+function downloadCSV() {
+  if (!accumulatedData.length) return;
+
+  const headers = ['Date', 'M.No', 'Name', ...goals.map(g => g.label), 'Points'];
+  const rows = accumulatedData.map(d => {
+    let rowPoints = 0;
+    const goalVals = goals.map(g => {
+      const val = d.goals[g.label] || '';
+      rowPoints += calcPoints(val);
+      return val;
+    });
+    return [d.date, d.mno, d.name, ...goalVals, rowPoints];
+  });
+
+  let csv = '\uFEFF'; // BOM for Excel compatibility
+  csv += headers.map(h => '"' + h + '"').join(',') + '\n';
+  for (const row of rows) {
+    csv += row.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',') + '\n';
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'goal_tracker_' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV downloaded!');
+}
+
+// ════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Init
+updateAccumulatedBar();
+</script>
+
+</body>
+</html>
